@@ -1,0 +1,14 @@
+controller_names:
+  - robot_controller
+
+robot_controller:
+  type: FollowJointTrajectory
+  action_ns: /execute_trajectory
+  default: true
+  joints:
+    - shoulder_pan
+    - shoulder_lift
+    - elbow_flex
+    - wrist_flex
+    - wrist_roll
+    - gripper

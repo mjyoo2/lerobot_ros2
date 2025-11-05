@@ -1,0 +1,16 @@
+# SO-100 Leader Robot Configuration
+# Used for teleoperation (leader arm)
+
+# Teleoperator type
+teleop_type: "so100_leader"
+
+# Motor bus configuration
+port: "/dev/ttyUSB1"  # Different port from follower
+baudrate: 1000000
+
+# Calibration directory
+calibration_dir: "./calibration/leader_001"
+
+# Additional parameters
+extra_params:
+  use_degrees: false  # Use normalized positions

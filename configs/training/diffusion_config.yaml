@@ -1,0 +1,80 @@
+# Diffusion Policy Training Configuration
+
+# Dataset
+dataset:
+  repo_id: "your-username/robot-dataset"
+  local_path: null
+  train_split: 0.95
+
+# Policy configuration
+policy:
+  type: "diffusion"
+  name: "diffusion_policy"
+
+  # Diffusion-specific parameters
+  diffusion:
+    n_action_steps: 16   # Action horizon
+    n_obs_steps: 2       # Observation history
+    num_inference_steps: 10  # Diffusion denoising steps
+    down_dims: [256, 512, 1024]
+    kernel_size: 5
+    n_groups: 8
+
+  # Vision encoder
+  vision:
+    backbone: "resnet18"
+    pretrained: true
+    freeze_backbone: false
+
+  # Input/output shapes
+  observation:
+    state_dim: 6
+    image_size: [224, 224]
+  action:
+    action_dim: 6
+
+# Training parameters
+training:
+  num_epochs: 5000
+  batch_size: 64  # Diffusion benefits from larger batches
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-6
+  grad_clip: 10.0
+
+  # Learning rate schedule
+  lr_scheduler: "cosine"
+  lr_warmup_epochs: 100
+
+  # Optimization
+  optimizer: "adamw"
+  use_amp: true  # Recommended for diffusion
+
+  # Device
+  device: "cuda"
+  num_workers: 8
+
+# Validation
+validation:
+  eval_freq: 100
+  save_freq: 500
+  num_eval_episodes: 10
+
+# Logging
+logging:
+  log_freq: 10
+  output_dir: "outputs/train/diffusion_robot"
+
+  wandb:
+    enabled: false
+    project: "robot-learning"
+    tags: ["diffusion", "robot"]
+
+# Checkpointing
+checkpoint:
+  save_best: true
+  save_last: true
+  monitor: "val_loss"
+  mode: "min"
+
+# Reproducibility
+seed: 42

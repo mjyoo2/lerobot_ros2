@@ -1,0 +1,35 @@
+# Wrist Camera Configuration
+# Small USB camera mounted on robot wrist/gripper
+
+camera:
+  name: "wrist"
+  type: "opencv"
+
+  # OpenCV camera settings
+  opencv:
+    index_or_path: 1  # /dev/video1
+    backend: "v4l2"
+
+  # Video settings (lower resolution for wrist cam)
+  resolution:
+    width: 320
+    height: 240
+  fps: 30
+  color_mode: "rgb"
+
+  # Image processing
+  rotation: 0
+  flip_horizontal: false
+  flip_vertical: false
+
+  # Camera warmup
+  warmup_time: 1.0
+
+  # Advanced settings
+  auto_exposure: true
+  auto_white_balance: true
+
+# ROS2 topics
+ros2:
+  image_topic: "/camera/wrist/image_raw"
+  camera_info_topic: "/camera/wrist/camera_info"

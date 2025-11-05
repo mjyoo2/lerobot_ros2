@@ -1,0 +1,45 @@
+move_group:
+  ros__parameters:
+    planning_pipelines: ["ompl"]
+    default_planning_pipeline: "ompl"
+
+    capabilities: >-
+      move_group/ExecuteTrajectoryAction
+      move_group/MoveGroupCartesianPathService
+      move_group/MoveGroupExecuteTrajectoryAction
+      move_group/MoveGroupKinematicsService
+      move_group/MoveGroupMoveAction
+      move_group/MoveGroupPlanService
+      move_group/MoveGroupQueryPlannersService
+      move_group/MoveGroupStateValidationService
+
+    ompl:
+      planning_plugin: "ompl_interface/OMPLPlanner"
+      request_adapters:
+        - default_planner_request_adapters/AddTimeOptimalParameterization
+        - default_planner_request_adapters/ResolveConstraintFrames
+        - default_planner_request_adapters/FixWorkspaceBounds
+        - default_planner_request_adapters/FixStartStateBounds
+        - default_planner_request_adapters/FixStartStateCollision
+        - default_planner_request_adapters/FixStartStatePathConstraints
+      start_state_max_bounds_error: 0.1
+
+      planner_configs:
+        - RRTConnect
+        - RRT
+
+      RRTConnect:
+        type: "geometric::RRTConnect"
+        range: 0.0
+
+      RRT:
+        type: "geometric::RRT"
+        range: 0.0
+        goal_bias: 0.05
+
+      arm:
+        planner_configs:
+          - RRTConnect
+          - RRT
+        projection_evaluator: "joints(joint_1,joint_2)"
+        longest_valid_segment_fraction: 0.005

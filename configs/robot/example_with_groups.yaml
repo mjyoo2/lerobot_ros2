@@ -1,0 +1,113 @@
+# Example Robot Configuration with Motor Groups
+# This config demonstrates how to organize motors into groups for calibration
+
+robot_type: "custom"
+robot_id: "example_001"
+
+# Motor type: "dynamixel" or "feetech"
+motor_type: "dynamixel"
+
+# Serial port and communication
+port: "/dev/ttyUSB0"
+baudrate: 1000000
+
+# Motors configuration
+# Each motor needs an ID, model, and name
+motors:
+  # Arm motors (6-DOF arm example)
+  arm_shoulder_pan:
+    id: 1
+    model: "xl330-m288"
+
+  arm_shoulder_lift:
+    id: 2
+    model: "xl330-m288"
+
+  arm_elbow:
+    id: 3
+    model: "xl330-m288"
+
+  arm_wrist_1:
+    id: 4
+    model: "xl330-m077"
+
+  arm_wrist_2:
+    id: 5
+    model: "xl330-m077"
+
+  arm_wrist_3:
+    id: 6
+    model: "xl330-m077"
+
+  # Gripper motors
+  gripper_left:
+    id: 7
+    model: "xl330-m077"
+
+  gripper_right:
+    id: 8
+    model: "xl330-m077"
+
+# Motor groups for calibration GUI
+# Groups allow you to calibrate different parts separately
+motor_groups:
+  all:
+    - arm_shoulder_pan
+    - arm_shoulder_lift
+    - arm_elbow
+    - arm_wrist_1
+    - arm_wrist_2
+    - arm_wrist_3
+    - gripper_left
+    - gripper_right
+
+  arm:
+    - arm_shoulder_pan
+    - arm_shoulder_lift
+    - arm_elbow
+    - arm_wrist_1
+    - arm_wrist_2
+    - arm_wrist_3
+
+  gripper:
+    - gripper_left
+    - gripper_right
+
+  shoulder:
+    - arm_shoulder_pan
+    - arm_shoulder_lift
+
+  wrist:
+    - arm_wrist_1
+    - arm_wrist_2
+    - arm_wrist_3
+
+# Cameras (optional)
+cameras:
+  top:
+    type: "opencv"
+    index: 0
+    fps: 30
+    width: 640
+    height: 480
+    color_mode: "rgb"
+
+  wrist:
+    type: "opencv"
+    index: 1
+    fps: 30
+    width: 320
+    height: 240
+    color_mode: "rgb"
+
+# Calibration directory
+# Calibration is stored in motor EEPROM, but this directory can be used for backups
+calibration_dir: "./calibration/example_001"
+
+# Safety parameters
+max_relative_target: 10.0  # Maximum joint movement per step (degrees)
+
+# Additional parameters
+extra_params:
+  use_degrees: true  # Use degrees instead of normalized positions
+  control_mode: "position"  # "position" or "velocity"

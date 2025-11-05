@@ -1,0 +1,43 @@
+# Top Camera Configuration
+# USB webcam or RealSense camera mounted above workspace
+
+camera:
+  name: "top"
+  type: "opencv"  # or "realsense"
+
+  # OpenCV camera settings
+  opencv:
+    index_or_path: 0  # /dev/video0
+    backend: "v4l2"  # Video4Linux2 backend
+
+  # Video settings
+  resolution:
+    width: 640
+    height: 480
+  fps: 30
+  color_mode: "rgb"  # or "bgr"
+
+  # Image processing
+  rotation: 0  # 0, 90, 180, 270 degrees
+  flip_horizontal: false
+  flip_vertical: false
+
+  # Camera warmup
+  warmup_time: 1.0  # seconds (for auto-exposure)
+
+  # Advanced settings
+  auto_exposure: true
+  auto_white_balance: true
+  brightness: 128  # 0-255
+  contrast: 128    # 0-255
+  saturation: 128  # 0-255
+
+# ROS2 topics
+ros2:
+  image_topic: "/camera/top/image_raw"
+  camera_info_topic: "/camera/top/camera_info"
+
+# Optional: Camera calibration
+calibration:
+  enabled: false
+  calibration_file: "./calibration/top_camera_calib.yaml"

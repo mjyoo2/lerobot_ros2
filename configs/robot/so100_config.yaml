@@ -1,0 +1,40 @@
+# SO-100 Follower Robot Configuration
+# Compatible with LeRobot SO100Follower class
+
+# Robot type (determines which LeRobot class to use)
+robot_type: "so100_follower"
+
+# Robot identification
+robot_id: "follower_001"
+
+# Motor bus configuration
+port: "/dev/ttyUSB0"
+baudrate: 1000000
+
+# Cameras
+cameras:
+  top:
+    type: "opencv"
+    index: 0
+    fps: 30
+    width: 640
+    height: 480
+    color_mode: "rgb"
+
+  wrist:
+    type: "opencv"
+    index: 1
+    fps: 30
+    width: 320
+    height: 240
+    color_mode: "rgb"
+
+# Calibration directory
+calibration_dir: "./calibration/follower_001"
+
+# Safety parameters
+max_relative_target: 10.0  # Maximum joint movement per step (degrees)
+
+# Additional SO-100 specific parameters
+extra_params:
+  use_degrees: false  # Use normalized positions instead of degrees

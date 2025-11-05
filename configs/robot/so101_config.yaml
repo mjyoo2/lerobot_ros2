@@ -1,0 +1,35 @@
+# SO-101 Robot Configuration
+# 6 Feetech STS3215 servo motors
+
+# Motor type: "dynamixel" or "feetech"
+motor_type: "feetech"
+
+# Serial port (auto-detect if null)
+port: null  # Will auto-detect /dev/ttyACM0 or /dev/ttyUSB0
+
+# Communication baudrate
+baudrate: 1000000
+
+# Motors configuration
+motors:
+  shoulder_pan:
+    id: 1
+  shoulder_lift:
+    id: 2
+  elbow_flex:
+    id: 3
+  wrist_flex:
+    id: 4
+  wrist_roll:
+    id: 5
+  gripper:
+    id: 6
+
+# Optional: Cameras (if available)
+# cameras:
+#   top:
+#     type: "opencv"
+#     index: 0
+#     width: 640
+#     height: 480
+#     fps: 30

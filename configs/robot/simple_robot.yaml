@@ -1,0 +1,51 @@
+# Simple Robot Configuration Example
+# Modify this to match your actual robot
+
+# Robot type (available types: manipulator, mobile_manipulator, etc.)
+robot_type: "manipulator"
+
+# Robot identification
+robot_id: "my_robot_001"
+
+# Motor bus configuration
+# Find USB port with: ls /dev/ttyUSB* or python -m lerobot.find_port
+port: "/dev/ttyUSB0"  # On Windows use format like "COM3"
+baudrate: 1000000  # Dynamixel default
+
+# Motors (adjust motor count and IDs to match your actual robot)
+motors:
+  # Example: 6-axis robot arm
+  joint_1:
+    id: 1
+    model: "xl330-m288"  # Or your actual motor model
+  joint_2:
+    id: 2
+    model: "xl330-m288"
+  joint_3:
+    id: 3
+    model: "xl330-m288"
+  joint_4:
+    id: 4
+    model: "xl330-m288"
+  joint_5:
+    id: 5
+    model: "xl330-m288"
+  joint_6:
+    id: 6
+    model: "xl330-m288"
+
+# Cameras (optional)
+cameras:
+  camera_1:
+    type: "opencv"  # Or "realsense"
+    index: 0  # USB camera index
+    fps: 30
+    width: 640
+    height: 480
+    color_mode: "rgb"
+
+# Calibration directory (location to save calibration data)
+calibration_dir: "./calibration/my_robot_001"
+
+# Safety parameters
+max_relative_target: 10.0  # Maximum movement per step (degrees)

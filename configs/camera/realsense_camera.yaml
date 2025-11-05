@@ -1,0 +1,51 @@
+# Intel RealSense Depth Camera Configuration
+# D435, D455, or similar models
+
+camera:
+  name: "depth"
+  type: "realsense"
+
+  # RealSense settings
+  realsense:
+    serial_number: null  # null = auto-detect, or specify "128422271347"
+
+  # RGB stream
+  resolution:
+    width: 640
+    height: 480
+  fps: 30
+  color_mode: "rgb"
+
+  # Depth stream
+  depth:
+    enabled: true
+    width: 640
+    height: 480
+    fps: 30
+    # Depth units: meters
+    depth_scale: 0.001
+
+  # Image processing
+  rotation: 0
+  flip_horizontal: false
+  flip_vertical: false
+
+  # Advanced settings
+  align_depth_to_color: true  # Align depth to RGB frame
+  enable_ir_emitter: true     # Infrared emitter for depth
+  depth_filters:
+    spatial: true    # Spatial filter
+    temporal: true   # Temporal filter
+    hole_filling: true
+
+# ROS2 topics
+ros2:
+  image_topic: "/camera/depth/image_raw"
+  depth_topic: "/camera/depth/depth"
+  camera_info_topic: "/camera/depth/camera_info"
+  pointcloud_topic: "/camera/depth/points"
+
+# Optional: Generate point cloud
+pointcloud:
+  enabled: false
+  decimation: 2  # Downsample factor
