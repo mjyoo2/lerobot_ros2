@@ -265,7 +265,7 @@ def main():
         "--motor-type",
         type=str,
         choices=["dynamixel", "feetech"],
-        default="dynamixel",
+        default="feetech",
         help="Motor type (Default: dynamixel)",
     )
     parser.add_argument(

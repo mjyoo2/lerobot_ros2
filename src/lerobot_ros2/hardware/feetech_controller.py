@@ -298,8 +298,22 @@ class FeetechController:
         # Encode using 11-bit sign-magnitude (LeRobot standard)
         encoded = self._encode_sign_magnitude(offset, sign_bit_index=11)
 
+        # Unlock EEPROM for writing (critical for Feetech motors)
+        try:
+            self._write_1byte(motor_id, self.ADDR_LOCK, 0)
+            time.sleep(0.01)  # Give motor time to unlock
+        except Exception as e:
+            print(f"  ⚠️  Warning: Could not unlock EEPROM for motor {motor_id}: {e}")
+
         # Write to EEPROM (torque should be disabled)
         self._write_2byte(motor_id, self.ADDR_HOMING_OFFSET, encoded)
+
+        # Lock EEPROM after writing
+        try:
+            time.sleep(0.01)  # Give motor time to process write
+            self._write_1byte(motor_id, self.ADDR_LOCK, 1)
+        except Exception as e:
+            print(f"  ⚠️  Warning: Could not lock EEPROM for motor {motor_id}: {e}")
 
     def get_homing_offset(self, motor_id: int) -> int:
         """
@@ -344,12 +358,14 @@ class FeetechController:
         print("  Resetting homing offsets to 0...")
         for motor_id in self.motor_ids:
             self.set_homing_offset(motor_id, 0)
+            time.sleep(0.05)  # Delay after each motor to prevent bus overload
 
-        # Small delay for motors to update
-        import time
-        time.sleep(0.05)
+        # Longer delay for all motors to fully update after reset
+        print("  Waiting for motors to update...")
+        time.sleep(0.2)
 
         # Now read actual positions and calculate offsets
+        print("  Setting calibrated offsets...")
         for motor_id in self.motor_ids:
             # Read actual physical position (with offset=0)
             actual_pos = self._read_2byte(motor_id, self.ADDR_PRESENT_POSITION)
@@ -365,6 +381,9 @@ class FeetechController:
 
             offsets[motor_id] = offset
             print(f"  Motor {motor_id}: Actual {actual_pos} → Present {center} (offset={offset})")
+
+            # Delay after each motor to prevent bus overload
+            time.sleep(0.05)
 
         return offsets
 
@@ -728,23 +747,45 @@ class FeetechController:
                 # Write unsigned value
                 self._write_2byte(motor_id, self.ADDR_GOAL_POSITION, position_raw_clipped)
 
-    def _read_1byte(self, motor_id: int, address: int) -> int:
-        """Read 1 byte"""
-        data, result, error = self.packet_handler.read1ByteTxRx(
-            self.port_handler, motor_id, address
-        )
-        if result != scs.COMM_SUCCESS:
-            raise Exception(f"Read failed (motor {motor_id}, address {address})")
-        return data
+    def _read_1byte(self, motor_id: int, address: int, retries: int = 3) -> int:
+        """Read 1 byte with retry logic"""
+        last_error = None
+        for attempt in range(retries):
+            data, result, error = self.packet_handler.read1ByteTxRx(
+                self.port_handler, motor_id, address
+            )
+            if result == scs.COMM_SUCCESS:
+                return data  # Success
 
-    def _read_2byte(self, motor_id: int, address: int) -> int:
-        """Read 2 bytes"""
-        data, result, error = self.packet_handler.read2ByteTxRx(
-            self.port_handler, motor_id, address
-        )
-        if result != scs.COMM_SUCCESS:
-            raise Exception(f"Read failed (motor {motor_id}, address {address})")
-        return data
+            # Store error message
+            last_error = f"result={result}, error={error}"
+
+            # Retry with delay if not last attempt
+            if attempt < retries - 1:
+                time.sleep(0.02 * (attempt + 1))  # Increasing delay
+
+        # All retries failed
+        raise Exception(f"Read failed after {retries} attempts (motor {motor_id}, address {address}): {last_error}")
+
+    def _read_2byte(self, motor_id: int, address: int, retries: int = 3) -> int:
+        """Read 2 bytes with retry logic"""
+        last_error = None
+        for attempt in range(retries):
+            data, result, error = self.packet_handler.read2ByteTxRx(
+                self.port_handler, motor_id, address
+            )
+            if result == scs.COMM_SUCCESS:
+                return data  # Success
+
+            # Store error message
+            last_error = f"result={result}, error={error}"
+
+            # Retry with delay if not last attempt
+            if attempt < retries - 1:
+                time.sleep(0.02 * (attempt + 1))  # Increasing delay
+
+        # All retries failed
+        raise Exception(f"Read failed after {retries} attempts (motor {motor_id}, address {address}): {last_error}")
 
     def _encode_sign_magnitude(self, value: int, sign_bit_index: int) -> int:
         """
@@ -782,22 +823,46 @@ class FeetechController:
         magnitude = encoded_value & magnitude_mask
         return -magnitude if direction_bit else magnitude
 
-    def _write_1byte(self, motor_id: int, address: int, value: int):
-        """Write 1 byte"""
-        result, error = self.packet_handler.write1ByteTxRx(
-            self.port_handler, motor_id, address, value
-        )
-        if result != scs.COMM_SUCCESS:
-            raise Exception(f"Write failed (motor {motor_id}, address {address})")
+    def _write_1byte(self, motor_id: int, address: int, value: int, retries: int = 3):
+        """Write 1 byte with retry logic"""
+        last_error = None
+        for attempt in range(retries):
+            result, error = self.packet_handler.write1ByteTxRx(
+                self.port_handler, motor_id, address, value
+            )
+            if result == scs.COMM_SUCCESS:
+                return  # Success
 
-    def _write_2byte(self, motor_id: int, address: int, value: int):
-        """Write 2 bytes"""
-        result, error = self.packet_handler.write2ByteTxRx(
-            self.port_handler, motor_id, address, value
-        )
-        if result != scs.COMM_SUCCESS:
+            # Store error message
+            last_error = f"result={result}, error={error}"
+
+            # Retry with delay if not last attempt
+            if attempt < retries - 1:
+                time.sleep(0.02 * (attempt + 1))  # Increasing delay
+
+        # All retries failed
+        raise Exception(f"Write failed after {retries} attempts (motor {motor_id}, address {address}, value {value}): {last_error}")
+
+    def _write_2byte(self, motor_id: int, address: int, value: int, retries: int = 3):
+        """Write 2 bytes with retry logic"""
+        last_error = None
+        for attempt in range(retries):
+            result, error = self.packet_handler.write2ByteTxRx(
+                self.port_handler, motor_id, address, value
+            )
+            if result == scs.COMM_SUCCESS:
+                return  # Success
+
+            # Store error message
             err_msg = self.packet_handler.getTxRxResult(result)
-            raise Exception(f"Write failed (motor {motor_id}, address {address}, value {value}): {err_msg}")
+            last_error = err_msg
+
+            # Retry with delay if not last attempt
+            if attempt < retries - 1:
+                time.sleep(0.02 * (attempt + 1))  # Increasing delay
+
+        # All retries failed
+        raise Exception(f"Write failed after {retries} attempts (motor {motor_id}, address {address}, value {value}): {last_error}")
 
     def get_observation(self) -> Dict[str, np.ndarray]:
         """

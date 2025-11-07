@@ -41,16 +41,79 @@ The SO-101 is a 6-DOF robotic arm compatible with LeRobot-ROS2. This guide cover
 # Install Python package
 pip install -e .
 pip install pygame  # For GUI control
+```
 
-# Install ROS2 (if not already installed)
-# For Ubuntu 22.04 - ROS2 Humble:
-sudo apt install ros-humble-desktop
+### Install ROS2 (if not already installed)
 
-# For Ubuntu 24.04 - ROS2 Jazzy:
-sudo apt install ros-jazzy-desktop
+#### For Ubuntu 22.04 - ROS2 Humble:
 
-# Install MoveIt (for advanced motion planning)
-sudo apt install ros-${ROS_DISTRO}-moveit
+```bash
+# 1. Set locale
+sudo apt update && sudo apt install -y locales
+sudo locale-gen en_US en_US.UTF-8
+sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+export LANG=en_US.UTF-8
+
+# 2. Enable Ubuntu Universe repository
+sudo apt install -y software-properties-common
+sudo add-apt-repository universe
+
+# 3. Add ROS 2 GPG key
+sudo apt update && sudo apt install -y curl
+sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+
+# 4. Add ROS 2 repository
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+# 5. Install ROS2 Humble
+sudo apt update
+sudo apt install -y ros-humble-desktop
+
+# 6. Setup environment (add to ~/.bashrc for permanent setup)
+source /opt/ros/humble/setup.bash
+echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+
+# 7. Install development tools
+sudo apt install -y ros-dev-tools
+```
+
+#### For Ubuntu 24.04 - ROS2 Jazzy:
+
+```bash
+# 1. Set locale
+sudo apt update && sudo apt install -y locales
+sudo locale-gen en_US en_US.UTF-8
+sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+export LANG=en_US.UTF-8
+
+# 2. Enable Ubuntu Universe repository
+sudo apt install -y software-properties-common
+sudo add-apt-repository universe
+
+# 3. Add ROS 2 GPG key
+sudo apt update && sudo apt install -y curl
+sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+
+# 4. Add ROS 2 repository
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+# 5. Install ROS2 Jazzy
+sudo apt update
+sudo apt install -y ros-jazzy-desktop
+
+# 6. Setup environment (add to ~/.bashrc for permanent setup)
+source /opt/ros/jazzy/setup.bash
+echo "source /opt/ros/jazzy/setup.bash" >> ~/.bashrc
+
+# 7. Install development tools
+sudo apt install -y ros-dev-tools
+```
+
+### Install MoveIt (for advanced motion planning)
+
+```bash
+# After ROS2 is installed
+sudo apt install -y ros-${ROS_DISTRO}-moveit
 ```
 
 ### USB Device Access
@@ -61,7 +124,7 @@ sudo usermod -aG dialout $USER
 # Log out and log back in for this to take effect
 
 # Or temporarily for current session:
-sudo chmod 666 /dev/ttyUSB0  # Replace with your port
+sudo chmod 666 /dev/ttyACM0  # Replace with your port
 ```
 
 ---
@@ -72,22 +135,22 @@ Get your SO-101 running in 5 simple steps:
 
 ```bash
 # 1. Find USB port and scan motors
-python scripts/register_motors.py --port /dev/ttyUSB0 --scan --output configs/robot/so101_scanned.yaml
+./run.sh scripts/register_motors.py --port /dev/ttyACM0 --scan --output configs/robot/so101_scanned.yaml
 
 # 2. Calibrate motors (hands-on, follow prompts)
-python scripts/calibrate_motors.py --config configs/robot/so101_scanned.yaml
+./run.sh scripts/calibrate_motors.py --config configs/robot/so101_scanned.yaml
 
 # 3. Synchronize Goal Position (CRITICAL - prevents sudden movements!)
-python scripts/fix_goal_position.py --config configs/robot/so101_scanned.yaml
+./run.sh scripts/fix_goal_position.py --config configs/robot/so101_scanned.yaml
 
 # 4. Set speed limit for safety (recommended for first use)
-python scripts/set_motor_speed_limit.py --config configs/robot/so101_scanned.yaml --speed 200
+./run.sh scripts/set_motor_speed_limit.py --config configs/robot/so101_scanned.yaml --speed 200
 
 # 5A. Control with GUI
-python scripts/control_motors_gui.py --config configs/robot/so101_scanned.yaml
+./run.sh scripts/control_motors_gui.py --config configs/robot/so101_scanned.yaml
 
 # OR 5B. Control with ROS2
-python scripts/run_ros2_bridge.py --config configs/robot/so101_scanned.yaml
+./run.sh scripts/run_ros2_bridge.py --config configs/robot/so101_scanned.yaml
 ```
 
 **Once running (Option 5B - ROS2):**
@@ -106,7 +169,7 @@ ros2 topic pub /joint_commands std_msgs/msg/Float64MultiArray "data: [0.0, 0.0, 
 #### Find Available USB Ports
 
 ```bash
-python scripts/register_motors.py --find-port
+./run.sh scripts/register_motors.py --find-port
 ```
 
 **Output:**
