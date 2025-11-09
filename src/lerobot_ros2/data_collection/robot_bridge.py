@@ -58,12 +58,14 @@ class RobotBridge(Node):
         node_name: str = "robot_bridge",
         publish_rate: float = 30.0,
         namespace: str = "",
+        enable_torque: bool = True,
     ):
         super().__init__(node_name, namespace=namespace)
 
         self.robot_config = robot_config
         self.publish_rate = publish_rate
         self.bridge = None  # Lazy initialization
+        self.enable_torque_on_connect = enable_torque
 
         # Joint names (URDF compatible)
         self.joint_names = self._get_joint_names()
@@ -198,10 +200,14 @@ class RobotBridge(Node):
                 self.get_logger().info(f"  [{i}] joint_names[{i}] = '{joint_name}' → motor_ids[{i}] = {motor_id}")
             self.get_logger().info("=" * 80)
 
-            # Enable torque
-            self.get_logger().info("Enabling motor torque...")
-            self.motor_controller.enable_torque()
-            self.get_logger().info("✓ Torque enabled")
+            # Enable torque (optional)
+            if self.enable_torque_on_connect:
+                self.get_logger().info("Enabling motor torque...")
+                self.motor_controller.enable_torque()
+                self.get_logger().info("✓ Torque enabled")
+            else:
+                self.get_logger().info("⚠️  Torque disabled - motors can be moved by hand")
+                self.get_logger().info("   (Commands will be ignored)")
 
             # Initialize camera controller (if cameras configured)
             if "cameras" in self.robot_config:
@@ -254,7 +260,20 @@ class RobotBridge(Node):
         if "joint_names" in self.robot_config:
             return self.robot_config["joint_names"]
 
-        # Method 2: Extract joint_name from motors
+        # Method 2: Auto-detect SO-101 robot (6 motors)
+        if "motors" in self.robot_config and len(self.robot_config["motors"]) == 6:
+            # Default SO-101 joint names (matches URDF)
+            self.get_logger().info("🤖 Auto-detected SO-101 robot, using standard joint names")
+            return [
+                "shoulder_pan",
+                "shoulder_lift",
+                "elbow_flex",
+                "wrist_flex",
+                "wrist_roll",
+                "gripper"
+            ]
+
+        # Method 3: Extract joint_name from motors
         if "motors" in self.robot_config:
             joint_names = []
             for motor_name in sorted(self.robot_config["motors"].keys()):
@@ -266,7 +285,7 @@ class RobotBridge(Node):
                     joint_names.append(motor_name.replace("motor_", "joint_"))
             return joint_names
 
-        # Method 3: Fallback - generic joint names
+        # Method 4: Fallback - generic joint names
         return [f"joint_{i+1}" for i in range(6)]
 
     def _parse_motor_config(self, config: Dict) -> Dict:
@@ -277,16 +296,22 @@ class RobotBridge(Node):
         # Extract motor ID list
         motor_ids = []
         if "motors" in config:
-            # If joint_names specified, use that order
-            if "joint_names" in config:
-                for joint_name in config["joint_names"]:
-                    # Find motor with matching joint_name
+            # Check if motors have joint_name field (for custom mapping)
+            has_joint_name_field = any(
+                "joint_name" in motor_info
+                for motor_info in config["motors"].values()
+            )
+
+            if has_joint_name_field:
+                # Use joint_name field to map motors
+                for joint_name in self.joint_names:
                     for motor_name, motor_info in config["motors"].items():
                         if motor_info.get("joint_name") == joint_name:
                             motor_ids.append(motor_info["id"])
                             break
             else:
-                # If no joint_names, use sorted order
+                # Default: use sorted motor name order (motor_1, motor_2, ...)
+                # This matches the auto-detected joint_names order
                 for motor_name in sorted(config["motors"].keys()):
                     motor_info = config["motors"][motor_name]
                     motor_ids.append(motor_info["id"])
@@ -665,6 +690,11 @@ def main():
         default=30.0,
         help="Publishing frequency (Hz)",
     )
+    parser.add_argument(
+        "--no-torque",
+        action="store_true",
+        help="Disable motor torque (motors can be moved by hand, teleop mode)",
+    )
     args = parser.parse_args()
 
     # Load configuration
@@ -674,7 +704,11 @@ def main():
     rclpy.init()
 
     # Create Bridge node
-    bridge = RobotBridge(robot_config, publish_rate=args.rate)
+    bridge = RobotBridge(
+        robot_config,
+        publish_rate=args.rate,
+        enable_torque=not args.no_torque  # Invert flag
+    )
 
     # Connect to hardware
     if not bridge.connect():

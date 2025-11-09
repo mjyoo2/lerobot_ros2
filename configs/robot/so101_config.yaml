@@ -10,6 +10,18 @@ port: null  # Will auto-detect /dev/ttyACM0 or /dev/ttyUSB0
 # Communication baudrate
 baudrate: 1000000
 
+# Joint names (must match URDF joint order)
+joint_names:
+  - shoulder_pan
+  - shoulder_lift
+  - elbow_flex
+  - wrist_flex
+  - wrist_roll
+  - gripper
+
+# Calibration directory
+calibration_dir: "./calibration"
+
 # Motors configuration
 motors:
   shoulder_pan:
