@@ -114,3 +114,5 @@ configs/camera/*_local.yaml
 configs/camera/my_*.yaml
 
 CLAUDE.md
+trouble-shooting
+*.log
